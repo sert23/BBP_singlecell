@@ -16,6 +16,7 @@ families_list = list( "GABAa Receptors (ionotropic)"="GABAa Receptors (ionotropi
                             "Potassium-Channels" = "Potassium-Channels", 
                             "Sodium-Channels" = "Sodium-Channels", 
                             "Calcium-Channels"="Calcium-Channels","CNG-Channels"="CNG-Channels" ,
+                            # "",
                             "Ion channels and receptors" = "Ion channels and receptors",
                             "Synaptic release machinery genes" = "Synaptic release machinery genes")
 
@@ -397,7 +398,7 @@ server <- function(input, output,session) {
     }
     
     #Checklist_family
-    if (TRUE) #Family lists
+    if (TRUE) #Family lists. Add families here
     {genes_per_family<-list()
     
     genes_per_family[["GABAa Receptors (ionotropic)"]]<-c(1:18)
@@ -410,7 +411,8 @@ server <- function(input, output,session) {
     genes_per_family[["Sodium-Channels"]]<-c(263:276)
     genes_per_family[["Calcium-Channels"]]<-c(141:149)
     genes_per_family[["CNG-Channels"]]<-c(150:157)
-    genes_per_family[["Synaptic release machinery genes"]]<-c(281:518)
+    genes_per_family[["Synaptic release machinery genes"]]<-c(c(281:518),
+                                                            c(19,63,65,68,70,71,72,74,75,145,146,147,164,165,166,167,168,169,170,171,277,278,279))
     genes_per_family[["Ion channels and receptors"]]<-c(1:280)
     }
     
@@ -1068,6 +1070,11 @@ server <- function(input, output,session) {
       out_list<-adaptedDE(group1Data()[4:length(group1Data())],
                           group2Data()[4:length(group2Data())],
                           disag_n = input$n_value, threshold = input$pvalue)
+      
+      ##Ordering by FC
+      
+      
+      
       })
     
     output$nText <- renderText({
@@ -1114,21 +1121,31 @@ server <- function(input, output,session) {
       dset2<-ddply(set2, "Group", numcolwise(mean))
       dset1<-cbind(dset1[1],round(dset1[2:length(dset1)], digits = 2))
       dset2<-cbind(dset2[1],round(dset2[2:length(dset2)], digits = 2))
-      
-      
       mset1<-melt(dset1)
-      
       s1max<-max(mset1$value)
-      
       mset1$Gene<-mset1$variable
       mset1$value<-(-1)*mset1$value
       mset2<-melt(dset2)
-      
       mset2$Gene<-mset2$variable
       s2max<-max(mset2$value)
-      
       maxval<-round(max(s1max,s2max),-2)
       minval<-round(min(s1max,s2max),-1)
+      
+      FC1<-abs(mset1$value/mset2$value)
+      FC2<-abs(mset2$value/mset1$value)
+      #print(cbind(FC1,FC2))
+      DE_genes<-ntext()[order(apply(cbind(FC1,FC2), 1, max))] 
+      set1<-cbind(Group=rep(Group1lab,nrow(group1Data())),group1Data()[DE_genes])
+      set2<-cbind(Group=rep(Group2lab,nrow(group2Data())),group2Data()[DE_genes])
+      dset1<-ddply(set1, "Group", numcolwise(mean))
+      dset2<-ddply(set2, "Group", numcolwise(mean))
+      dset1<-cbind(dset1[1],round(dset1[2:length(dset1)], digits = 2))
+      dset2<-cbind(dset2[1],round(dset2[2:length(dset2)], digits = 2))
+      mset1<-melt(dset1)
+      mset1$Gene<-mset1$variable
+      mset1$value<-(-1)*mset1$value
+      mset2<-melt(dset2)
+      mset2$Gene<-mset2$variable
       
       
       tickvalues = sort(c(-maxval, (-0.8)*maxval,(-0.6*maxval),(-0.4)*maxval,-0.2*maxval, 0, 0.2*maxval, 
@@ -1138,11 +1155,14 @@ server <- function(input, output,session) {
       sets<-rbind(mset1,mset2)
       
       sets$abs_value<-abs(sets$value)
+      ylab <- list(
+        title = ""
+        )
       plot_ly(sets, x = value, y = Gene, group = Group, type = 'bar', orientation = 'h',
               hoverinfo = 'y+text+name', text = abs_value)%>%
         layout(bargap = 0.1, barmode = 'overlay',
-               xaxis = list(tickmode = 'array', tickvals = tickvalues,
-                            ticktext = ticklabs))
+               xaxis = list(title = "Expression (TPM)",tickmode = 'array', tickvals = tickvalues,
+                            ticktext = ticklabs), yaxis = ylab )
       #if (length(ntext())<1){
        # return(NULL)      }
     })
@@ -1158,7 +1178,8 @@ server <- function(input, output,session) {
 }
 
 #shinyApp(ui, server)
-shinyApp(ui, server, options=list(shiny.port = 2020, host="0.0.0.0"))
+#shinyApp(ui, server, options=list(host="0.0.0.0",port = 2020 ))
+shinyApp(ui, server, options=list(shiny.port = 80, host="0.0.0.0"))
 #options=list(port = 7777
 
 ####################################################
