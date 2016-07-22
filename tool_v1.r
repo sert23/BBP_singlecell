@@ -298,6 +298,8 @@ server <- function(input, output,session) {
       famBoxplot<-reactive({
       library(reshape)
       library(ggplot2)
+        #come back
+        
         if(input$selectfamscale=="Expression"){
       input_df<-getDatafam()
       gg_df<-melt(cbind(celltype = input_df$Cell.type, input_df[5:length(input_df)]))
@@ -327,10 +329,15 @@ server <- function(input, output,session) {
           # +
             #scale_y_continuous(trans="log2")
         }
+        
+        gg1
+        
+        
       })
       famBarplot<-reactive({
         library(reshape)
         library(ggplot2)
+       
         library(plyr)
         input_df<-getDatafam()
         if(input$selectfamscale=="Expression"){
@@ -429,6 +436,7 @@ server <- function(input, output,session) {
       famPieData<-reactive({
         library(reshape)
         library(ggplot2)
+        
         library(plyr)
         input_df<-getDatafam()
         if(input$selectfamscale=="Expression"){
@@ -509,6 +517,7 @@ server <- function(input, output,session) {
       percell_plot<-function(gene){
       library(reshape)
       library(ggplot2)
+       
       
       gg_df<-getInData()
       gg_df$cellnumber<-gg_df$Sl..No
@@ -540,6 +549,7 @@ server <- function(input, output,session) {
       indBoxplot<-reactive({
         library(reshape)
         library(ggplot2)
+        #dev.off()
         input_df<-getInData()
         if(input$selectIndscale=="Expression"){
           
@@ -573,6 +583,7 @@ server <- function(input, output,session) {
       indBarplot<-reactive({
         library(reshape)
         library(ggplot2)
+        #dev.off()
         library(plyr)
         input_df<-getInData()
         if(input$selectIndscale=="Expression"){
@@ -608,9 +619,11 @@ server <- function(input, output,session) {
           
         }
       })
+      
       indPieData<-reactive({
         library(reshape)
         library(ggplot2)
+        #dev.off()
         library(plyr)
         input_df<-getInData()
         if(input$selectIndscale=="Expression"){
@@ -768,7 +781,7 @@ server <- function(input, output,session) {
         
         gene_data<-input_data[5:length(input_data)]
         gene_data<-Filter(function(x) sd(x) != 0, gene_data)
-        res.pca<-PCA(gene_data)
+        res.pca<-PCA(gene_data,graph = FALSE)
         reac_pca<<-reactive(res.pca)
         PC1 <- res.pca$ind$coord[,1]
         PC2 <- res.pca$ind$coord[,2]
@@ -784,6 +797,7 @@ server <- function(input, output,session) {
       
       plot2DPCA<-function(PCs){
         library(rwantshue)
+        
         scheme <- iwanthue()
         col_hcl <- list(c(0, 360),   # hue range [0,360]
                         c(0, 3),     # chroma range [0,3]
@@ -799,6 +813,8 @@ server <- function(input, output,session) {
       }
       
       plot3DPCA<-function(PCs){
+        
+        
         
         Celltype<-factor(PCs$Cell.type)
         #paste("Clarity: ", clarity)
@@ -1002,7 +1018,7 @@ server <- function(input, output,session) {
       library(reshape)
       library(ggplot2)
       library(plyr)
-      
+      #dev.off()
       
       
       input_df<-getInData()
@@ -1064,10 +1080,11 @@ server <- function(input, output,session) {
       
     })
     
-    output$venn<-renderPlot(venn.plot <- draw.pairwise.venn((length(group1Data())-4), 
+    output$venn<-renderPlot({#dev.off()
+      venn.plot <- draw.pairwise.venn((length(group1Data())-4), 
     (length(group1Data())-4),(length(group1Data())-4)- length(ntext()), c(paste(unique(group1Data()$Cell.type), collapse = ", "), 
     paste(unique(group2Data()$Cell.type), collapse = ", ")), cat.just = list(c(-1, -1), c(1, 1)),
-    fill = c("blue", "red")))
+    fill = c("blue", "red"))})
     output$DE_table<- DT::renderDataTable({
       library(plyr)
       set1<-cbind( celltype=group1Data()$Cell.type,group1Data()[ntext()])
@@ -1086,6 +1103,8 @@ server <- function(input, output,session) {
    
      output$DEpyramid2<-renderPlotly({
       library(reshape2)
+       
+       
       Group1lab<-paste(unique(group1Data()$Cell.type), collapse = ", ")
       Group2lab<-paste(unique(group2Data()$Cell.type), collapse = ", ")
        
@@ -1093,6 +1112,9 @@ server <- function(input, output,session) {
       set2<-cbind(Group=rep(Group2lab,nrow(group2Data())),group2Data()[ntext()])
       dset1<-ddply(set1, "Group", numcolwise(mean))
       dset2<-ddply(set2, "Group", numcolwise(mean))
+      dset1<-cbind(dset1[1],round(dset1[2:length(dset1)], digits = 2))
+      dset2<-cbind(dset2[1],round(dset2[2:length(dset2)], digits = 2))
+      
       
       mset1<-melt(dset1)
       
@@ -1135,6 +1157,8 @@ server <- function(input, output,session) {
    }
 }
 
-shinyApp(ui, server)
+#shinyApp(ui, server)
+shinyApp(ui, server, options=list(shiny.port = 2020, host="0.0.0.0"))
+#options=list(port = 7777
 
 ####################################################
